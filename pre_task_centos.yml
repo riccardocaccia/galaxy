@@ -1,0 +1,29 @@
+---
+
+- name: Install Dependencies for CentOS7
+  package:
+    name: ['acl', 'bzip2', 'git', 'make', 'python-psycopg2', 'python3-psycopg2', 'tar', 'python3-virtualenv',  'gcc', 'openssl-devel', 'bzip2-devel', 'libffi-devel', 'zlib-devel', 'xz-devel', 'sqlite-devel', 'wget']
+ 
+- name: Check if python is already installed
+  stat: path=/usr/local/bin/python3.7
+  register: python3
+  
+- name: Download and unarchive Python3.7.11
+  unarchive:
+    src: https://www.python.org/ftp/python/3.7.11/Python-3.7.11.tgz
+    dest: /tmp
+    remote_src: yes
+  when: not python3.stat.exists
+
+- name: Configure, compile and install Python3.7
+  shell: cd /tmp/Python-3.7.11 && {{ item }}
+  with_items:
+    - ./configure --enable-optimizations
+    - make altinstall
+  when: not python3.stat.exists
+
+- name: Correct python version selected
+  alternatives:
+    name: python3
+    link: /usr/bin/python3
+    path: /usr/local/bin/python3.7
