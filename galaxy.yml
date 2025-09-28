@@ -2,8 +2,8 @@
 - hosts: galaxyservers
   become: true
   become_user: root
-    #  vars_files:          
-    #    - group_vars/secret.yml
+  vars_files:             
+    - group_vars/secret.yml
 
   pre_tasks:
     - name: Include tasks for CentOS7
@@ -18,7 +18,7 @@
       yum:
         name: ca-certificates
         state: latest
-          
+
     - name: Put SELinux in permissive mode.
       selinux:
         policy: targeted
@@ -26,13 +26,10 @@
 
   roles:
     - galaxyproject.postgresql
-    - role: natefoo.postgresql_objects
-      become: true
-      become_user: postgres
+    - galaxyproject.postgresql_objects
     - geerlingguy.pip
     - galaxyproject.galaxy
-    - role: uchida.miniconda
-      become: true
-      become_user: "{{ galaxy_user.name }}"
+    - galaxyproject.miniconda
     - galaxyproject.nginx
     - galaxyproject.tusd
+    - usegalaxy_eu.certbot   
