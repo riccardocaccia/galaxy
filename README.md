@@ -1,3 +1,3 @@
 # galaxy
 
-galaxy installation 09-2025
+galaxy installation 09-2025.
