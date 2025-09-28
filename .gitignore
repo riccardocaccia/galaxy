@@ -1,0 +1,6 @@
+roles/
+.vault-password.txt
+nohup.out
+*.pyc
+__pycache__
+*.swp

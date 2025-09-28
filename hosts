@@ -1,0 +1,5 @@
+[galaxyservers]
+212.189.205.27.cloud.ba.infn.it ansible_connection=local ansible_user=rcaccia
+
+[dbservers:children]
+galaxyservers
