@@ -1,12 +1,22 @@
 ---
-- name: Ensure python build tools are installed (Rocky Linux)
+- name: Ensure python3 build tools are installed (Rocky Linux)
   dnf:
     name:
       - python3-pip
       - python3-setuptools
-      - python3-wheel
       - python3-devel
     state: present
+
+# Packages installed via pip
+- name: Upgrade pip, setuptools, wheel, and virtualenv
+  pip:
+    name:
+      - pip
+      - setuptools
+      - wheel
+      - virtualenv
+    state: latest
+    executable: pip3
 
 - name: Install Dependencies for Rocky Linux
   package:
@@ -26,7 +36,6 @@
       - wget
       - tar
       - python3-psycopg2
-      - python3-virtualenv
     state: present
 
 - name: Install Packages for Rocky Linux locales settings
@@ -35,3 +44,4 @@
       - langpacks-en
       - glibc-all-langpacks
     state: present
+

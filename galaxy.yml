@@ -7,22 +7,17 @@
 
   pre_tasks:
     - name: Include tasks for CentOS7
-      import_tasks: pretasks_centos.yml
+      import_tasks: pre_task_centos.yml
       when: ansible_distribution == 'CentOS'
 
     - name: Include tasks for RockyLinux9
-      import_tasks: pretasks_rockylinux9.yml
+      import_tasks: pre_task_RockyLinux.yml
       when: ansible_distribution == "Rocky"
 
     - name: Update ca-certificates
       yum:
         name: ca-certificates
         state: latest
-
-    - name: Put SELinux in permissive mode.
-      selinux:
-        policy: targeted
-        state: permissive
 
   roles:
     - galaxyproject.postgresql
