@@ -1,7 +1,9 @@
 ---
 - hosts: galaxyservers
   become: true
-  # become_user: root
+  #
+  become_user: root
+  #
   vars_files:             
     - group_vars/secret.yml
 
