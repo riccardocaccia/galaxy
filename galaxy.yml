@@ -1,7 +1,7 @@
 ---
 - hosts: galaxyservers
   become: true
-  become_user: root
+  # become_user: root
   vars_files:             
     - group_vars/secret.yml
 
@@ -20,11 +20,12 @@
         state: latest
 
   roles:
-    - galaxyproject.postgresql
-    - galaxyproject.postgresql_objects
+    - role: galaxyproject.postgresql
+    - role: galaxyproject.postgresql_objects
+      become_user: postgres
     - geerlingguy.pip
     - galaxyproject.galaxy
     - galaxyproject.miniconda
+    - usegalaxy_eu.certbot
     - galaxyproject.nginx
     - galaxyproject.tusd
-    - usegalaxy_eu.certbot   

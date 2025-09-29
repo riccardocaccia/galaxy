@@ -1,0 +1,21 @@
+---
+# PostgreSQL
+
+# Non lasciare che il ruolo scarichi il repo vecchio o la chiave GPG
+postgresql_use_pgdg: false
+postgresql_version: 15
+
+# Pacchetti corretti per Rocky 9
+postgresql_packages:
+  - postgresql15
+  - postgresql15-server
+  - postgresql15-contrib
+
+# Utenti e database da creare
+postgresql_objects_users:
+  - name: "{{ galaxy_user_name }}"
+
+postgresql_objects_databases:
+  - name: "{{ galaxy_db_name }}"
+    owner: "{{ galaxy_user_name }}"
+
