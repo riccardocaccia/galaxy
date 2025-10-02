@@ -16,10 +16,10 @@
       import_tasks: pre_task_RockyLinux.yml
       when: ansible_distribution == "Rocky"
 
-    - name: Update ca-certificates
-      yum:
-        name: ca-certificates
-        state: latest
+#    - name: Update ca-certificates
+ #     yum:
+  #      name: ca-certificates
+   #     state: latest
 
   roles:
     - role: galaxyproject.postgresql
@@ -28,6 +28,17 @@
     - geerlingguy.pip
     - galaxyproject.galaxy
     - galaxyproject.miniconda
-    - usegalaxy_eu.certbot
+#    - usegalaxy_eu.certbot
     - galaxyproject.nginx
     - galaxyproject.tusd
+#    - galaxyproject.gxadmin
+
+#  post_tasks:
+ #   - name: Setup gxadmin cleanup task
+  #    ansible.builtin.cron:
+   #     name: "Cleanup Old User Data"
+    #    user: galaxy # Run as the Galaxy user
+     #   minute: "0"
+      #  hour: "0"
+       # job: "SHELL=/bin/bash source {{ galaxy_venv_dir }}/bin/activate &&  GALAXY_LOG_DIR=/tmp/gxadmin/ GALAXY_ROOT={{ galaxy_root }}/server GALAXY_CONFIG_FILE={{ galaxy_config_file }} /usr/local/bin/gxadmin galaxy cleanup 60"
+# job: ". {{ galaxy_venv_dir }}/bin/activate && GALAXY_LOG_DIR=/tmp/gxadmin/ GALAXY_ROOT={{ galaxy_root }}/server GALAXY_CONFIG_FILE={{ galaxy_config_file }} /usr/local/bin/gxadmin galaxy cleanup 60"  
