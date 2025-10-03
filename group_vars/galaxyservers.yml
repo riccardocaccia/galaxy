@@ -28,6 +28,10 @@ miniconda_prefix: "{{ galaxy_tool_dependency_dir }}/_conda"
 miniconda_version: ''
 miniconda_channels: ['conda-forge', 'defaults'] 
 miniconda_manage_dependencies: false # # Uso esplicito per prevenire conflitti con il ruolo galaxyproject.galaxy
+#
+nginx_conf_user: galaxy
+nginx_conf_group: galaxy
+#
 
 galaxy_config:
   galaxy:
@@ -70,13 +74,14 @@ galaxy_config:
   gravity:
     #
     process_manager: systemd
-    galaxy_user: "{{ galaxy_user }}"
+    galaxy_user: galaxy
     galaxy_root: "{{ galaxy_root }}/server"
     virtualenv: "{{ galaxy_root }}/venv"
     #app_server: gunicorn 
     gunicorn:
       # listening options
-      bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
+      bind: "unix:/srv/galaxy/var/config/gunicorn.sock"
+      #bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
       # performance options
       workers: 2
       # Other options that will be passed to gunicorn
