@@ -80,8 +80,8 @@ galaxy_config:
     #app_server: gunicorn 
     gunicorn:
       # listening options
-      bind: "unix:/srv/galaxy/var/config/gunicorn.sock"
-      #bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
+      #bind: unix:/srv/galaxy/var/config/gunicorn.sock
+      bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
       # performance options
       workers: 2
       # Other options that will be passed to gunicorn
