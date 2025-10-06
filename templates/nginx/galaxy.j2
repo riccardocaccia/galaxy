@@ -1,7 +1,7 @@
 upstream galaxy {
 	#server {{ galaxy_config.gravity.gunicorn.bind }};
-        server unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock;
-        #server unix:/srv/galaxy/var/config/gunicorn.sock;
+        #server unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock;
+        server unix:/srv/galaxy/var/config/gunicorn.sock;
 
 	# Or if you serve galaxy at a path like http(s)://fqdn/galaxy
 	# Remember to set galaxy_url_prefix in the galaxy.yml file.

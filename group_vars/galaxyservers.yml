@@ -4,12 +4,18 @@ pip_virtualenv_command: /usr/bin/python3 -m venv # usegalaxy_eu.certbot, usegala
 certbot_virtualenv_package_name: python3-virtualenv    # usegalaxy_eu.certbot
 pip_package: python3-pip                               # geerlingguy.pip
 
+#
+galaxy_user_name: galaxy
+galaxy_db_name: galaxy
+#
+
+
 # PostgreSQL
 postgresql_objects_users:
-  - name: galaxy
+  - name: "{{ galaxy_user_name }}"
 postgresql_objects_databases:
-  - name: galaxy
-    owner: galaxy
+  - name: "{{ galaxy_db_name }}"
+    owner: "{{ galaxy_user_name }}"
 
 # PostgreSQL Backups
 postgresql_backup_dir: /data/backups
@@ -26,29 +32,48 @@ galaxy_commit_id: release_23.0
 galaxy_force_checkout: true
 miniconda_prefix: "{{ galaxy_tool_dependency_dir }}/_conda"
 miniconda_version: ''
-miniconda_channels: ['conda-forge', 'defaults'] 
+miniconda_channels: ['conda-forge', 'defaults']
 miniconda_manage_dependencies: false # # Uso esplicito per prevenire conflitti con il ruolo galaxyproject.galaxy
 #
 nginx_conf_user: galaxy
 nginx_conf_group: galaxy
+galaxy_config_dir: /galaxy/templates/galaxy/config
 #
+
+# Galaxy Job Configuration
+#galaxy_job_config:
+#  runners:
+#    local_runner:
+#      load: galaxy.jobs.runners.local:LocalJobRunner
+#      workers: 4
+#  handling:
+#    assign: ['db-skip-locked']
+#  execution:
+#    default: local_env
+#    environments:
+#      local_env:
+#        runner: local_runner
+#        tmp_dir: true
+#  tools:
+#    - class: local # these special tools that aren't parameterized for remote execution - expression tools, upload, etc
+#      environment: local_env
 
 galaxy_config:
   galaxy:
     brand: "Mars 🚀"
-    admin_users: 
+    admin_users:
     - riccardocaccia0@gmail.com
     database_connection: "postgresql:///galaxy?host=/var/run/postgresql"
     file_path: /data
     check_migrate_tools: false
     tool_data_path: "{{ galaxy_mutable_data_dir }}/tool-data"
     object_store_store_by: uuid
-    id_secret: "{{ vault_id_secret }}" 
+    id_secret: "{{ vault_id_secret }}"
     job_config_file: "{{ galaxy_config_dir }}/job_conf.yml"
     # SQL Performance
     database_engine_option_server_side_cursors: true
     slow_query_log_threshold: 5
-    enable_per_request_sql_debugging: true 
+    enable_per_request_sql_debugging: true
     # File serving Performance
     nginx_x_accel_redirect_base: /_x_accel_redirect
     # Automation / Ease of Use / User-facing features
@@ -68,7 +93,7 @@ galaxy_config:
     # Tool security
     outputs_to_working_directory: true
     # TUS
-    tus_upload_store: /data/tus   
+    tus_upload_store: /data/tus
 
 # --------BLOCCO GRAVITY------------
   gravity:
@@ -77,11 +102,11 @@ galaxy_config:
     galaxy_user: galaxy
     galaxy_root: "{{ galaxy_root }}/server"
     virtualenv: "{{ galaxy_root }}/venv"
-    #app_server: gunicorn 
+    #app_server: gunicorn
     gunicorn:
       # listening options
-      #bind: unix:/srv/galaxy/var/config/gunicorn.sock
-      bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
+      bind: unix:/srv/galaxy/var/config/gunicorn.sock
+      #bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
       # performance options
       workers: 2
       # Other options that will be passed to gunicorn
@@ -176,4 +201,3 @@ tusd_instances:
       - "-upload-dir={{ galaxy_config.galaxy.tus_upload_store }}"
       - "-hooks-http=https://{{ inventory_hostname }}/api/upload/hooks"
       - "-hooks-http-forward-headers=X-Api-Key,Cookie"
-          
