@@ -2,6 +2,7 @@ runners:
   local_runner:
     load: galaxy.jobs.runners.local:LocalJobRunner
     workers: 4
+    assignment_method: db-skip-locked   # oppure db-transaction-isolation
 
 execution:
   default: local_dest

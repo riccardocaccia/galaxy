@@ -22,6 +22,7 @@
   roles:
     - role: galaxyproject.postgresql
     - role: galaxyproject.postgresql_objects
+      become: true
       become_user: postgres
     - geerlingguy.pip
     - galaxyproject.galaxy
