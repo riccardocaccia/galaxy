@@ -37,7 +37,7 @@ miniconda_manage_dependencies: false # # Uso esplicito per prevenire conflitti c
 #
 nginx_conf_user: galaxy
 nginx_conf_group: galaxy
-galaxy_config_dir: /galaxy/templates/galaxy/config
+galaxy_config_dir: /srv/galaxy/config
 #
 
 # Galaxy Job Configuration
@@ -71,7 +71,6 @@ galaxy_config:
     id_secret: "{{ vault_id_secret }}"
     job_config_file: "{{ galaxy_config_dir }}/job_conf.yml"
     # SQL Performance
-    database_engine_option_server_side_cursors: true
     slow_query_log_threshold: 5
     enable_per_request_sql_debugging: true
     # File serving Performance
@@ -92,6 +91,7 @@ galaxy_config:
     allow_user_impersonation: true
     # Tool security
     outputs_to_working_directory: true
+    new_user_dataset_access_role_default_private: true # Make datasets private by default
     # TUS
     tus_upload_store: /data/tus
 
