@@ -46,3 +46,25 @@
       - glibc-all-langpacks
     state: present
 
+##---------POSTGRESQL COMPATIBILITY ROCKY9-----------------------
+- name: Download PGDG RPM for RHEL/Rocky 9
+  ansible.builtin.get_url:
+    url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+    dest: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+    mode: '0644'
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version == '9'
+
+- name: Import PostgreSQL GPG key
+  rpm_key:
+    state: present
+    key: https://apt.postgresql.org/pub/repos/yum/keys/PGDG-RPM-GPG-KEY-RHEL
+
+- name: Install PGDG RPM for RHEL/Rocky 9
+  ansible.builtin.dnf:
+    name: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version == '9'

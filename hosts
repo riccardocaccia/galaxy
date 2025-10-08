@@ -1,5 +1,5 @@
 [galaxyservers]
-212.189.205.27.cloud.ba.infn.it ansible_connection=local ansible_user=rcaccia
+212.189.205.216.cloud.ba.infn.it ansible_connection=local ansible_user=riccardo-caccia
 
 [dbservers:children]
 galaxyservers

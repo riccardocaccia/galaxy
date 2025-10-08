@@ -1,39 +1,42 @@
 ---
-- hosts: galaxyservers
+- hosts: dbservers
   become: true
   become_user: root
-  vars_files:             
-    - group_vars/secret.yml
-
   pre_tasks:
-    - name: Include tasks for CentOS7
-      import_tasks: pre_task_centos.yml
-      when: ansible_distribution == 'CentOS'
-
     - name: Include tasks for RockyLinux9
       import_tasks: pre_task_RockyLinux.yml
       when: ansible_distribution == "Rocky"
-
-#    - name: Update ca-certificates
- #     yum:
-  #      name: ca-certificates
-   #     state: latest
-
+    - name: Install Dependencies
+      package:
+        name: 'acl'
   roles:
-    - role: galaxyproject.postgresql
+    - galaxyproject.postgresql
     - role: galaxyproject.postgresql_objects
       become: true
       become_user: postgres
-    - geerlingguy.pip
+
+- hosts: galaxyservers
+  become: true
+  become_user: root
+  vars_files:
+    - group_vars/secret.yml
+  pre_tasks:
+    - name: Install RHEL/CentOS/Rocky specific dependencies
+      package:
+        name: ['tmpwatch']
+      when: ansible_os_family == 'RedHat'
+    - name: Install Debian/Ubuntu specific dependencies
+      package:
+        name: ['tmpreaper']
+      when: ansible_os_family == 'Debian'
+  roles:
     - galaxyproject.tusd
     - galaxyproject.galaxy
     - role: galaxyproject.miniconda
       become: true
       become_user: "{{ galaxy_user_name }}"
-#    - usegalaxy_eu.certbot
     - galaxyproject.nginx
     - galaxyproject.gxadmin
-
   post_tasks:
     - name: Setup gxadmin cleanup task
       ansible.builtin.cron:
@@ -42,3 +45,6 @@
         minute: "0"
         hour: "0"
         job: "SHELL=/bin/bash source {{ galaxy_venv_dir }}/bin/activate &&  GALAXY_LOG_DIR=/tmp/gxadmin/ GALAXY_ROOT={{ galaxy_root }}/server GALAXY_CONFIG_FILE={{ galaxy_config_file }} /usr/local/bin/gxadmin galaxy cleanup 60"
+
+# CHECK
+#    - usegalaxy_eu.certbot

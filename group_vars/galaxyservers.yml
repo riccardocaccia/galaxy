@@ -1,26 +1,3 @@
----
-# Python 3 support
-pip_virtualenv_command: /usr/bin/python3 -m venv # usegalaxy_eu.certbot, usegalaxy_eu.tiaas2, galaxyproject.galaxy
-certbot_virtualenv_package_name: python3-virtualenv    # usegalaxy_eu.certbot
-pip_package: python3-pip                               # geerlingguy.pip
-
-#
-galaxy_user_name: galaxy
-galaxy_db_name: galaxy
-#
-
-
-# PostgreSQL
-postgresql_objects_users:
-  - name: "{{ galaxy_user_name }}"
-postgresql_objects_databases:
-  - name: "{{ galaxy_db_name }}"
-    owner: "{{ galaxy_user_name }}"
-
-# PostgreSQL Backups
-postgresql_backup_dir: /data/backups
-postgresql_backup_local_dir: "{{ '~postgres' | expanduser }}/backups"
-
 # Galaxy
 galaxy_create_user: true # False by default, as e.g. you might have a 'galaxy' user provided by LDAP or AD.
 galaxy_separate_privileges: true # Best practices for security, configuration is owned by 'root' (or a different user) than the processes
@@ -28,53 +5,45 @@ galaxy_manage_paths: true # False by default as your administrator might e.g. ha
 galaxy_manage_cleanup: true
 galaxy_layout: root-dir
 galaxy_root: /srv/galaxy
-galaxy_user: {name: galaxy, shell: /bin/bash}
+galaxy_user: {name: "{{ galaxy_user_name }}", shell: /bin/bash}
 galaxy_commit_id: release_23.0
 galaxy_force_checkout: true
 miniconda_prefix: "{{ galaxy_tool_dependency_dir }}/_conda"
-miniconda_version: ''
+miniconda_version: latest
 miniconda_channels: ['conda-forge', 'defaults']
 miniconda_manage_dependencies: false # # Uso esplicito per prevenire conflitti con il ruolo galaxyproject.galaxy
-#
-nginx_conf_user: galaxy
-nginx_conf_group: galaxy
-galaxy_config_dir: /srv/galaxy/config
-#
 
 # Galaxy Job Configuration
-#galaxy_job_config:
-#  runners:
-#    local_runner:
-#      load: galaxy.jobs.runners.local:LocalJobRunner
-#      workers: 4
-#  handling:
-#    assign: ['db-skip-locked']
-#  execution:
-#    default: local_env
-#    environments:
-#      local_env:
-#        runner: local_runner
-#        tmp_dir: true
-#  tools:
-#    - class: local # these special tools that aren't parameterized for remote execution - expression tools, upload, etc
-#      environment: local_env
+galaxy_job_config:
+  runners:
+    local_runner:
+      load: galaxy.jobs.runners.local:LocalJobRunner
+      workers: 4
+  handling:
+    assign: ['db-skip-locked']
+  execution:
+    default: local_env
+    environments:
+      local_env:
+        runner: local_runner
+        tmp_dir: true
+  tools:
+    - class: local # these special tools that aren't parameterized for remote execution - expression tools, upload, etc
+      environment: local_env
 
 galaxy_config:
   galaxy:
     brand: "Mars 🚀"
     logo_src: "https://training.galaxyproject.org/training-material/topics/admin/tutorials/customization/images/logo.png"
-    # Support
-    #support_url: "https://example.org/support"
-    #terms_url: "https://example.org/terms-of-service"
+    # Main Configuration
     admin_users:
     - riccardocaccia0@gmail.com
-    database_connection: "postgresql:///galaxy?host=/var/run/postgresql"
-    file_path: /data
-    check_migrate_tools: false
-    tool_data_path: "{{ galaxy_mutable_data_dir }}/tool-data"
+    database_connection: "postgresql:///{{ galaxy_db_name }}?host=/var/run/postgresql"
+    file_path: /data/datasets
+    job_working_directory: /data/jobs
     object_store_store_by: uuid
     id_secret: "{{ vault_id_secret }}"
-    job_config_file: "{{ galaxy_config_dir }}/job_conf.yml"
+    job_config: "{{ galaxy_job_config }}" # Use the variable we defined above
     # SQL Performance
     slow_query_log_threshold: 5
     enable_per_request_sql_debugging: true
@@ -97,85 +66,63 @@ galaxy_config:
     # Tool security
     outputs_to_working_directory: true
     new_user_dataset_access_role_default_private: true # Make datasets private by default
-    # TUS
-    galaxy_infrastructure_url: "https://{{ inventory_hostname }}"
-    tus_upload_store: "{{ galaxy_tus_upload_store }}"
-    #tus_upload_store: /data/tus
-
-galaxy_config_files_public:
-  - src: files/galaxy/welcome.html
-    dest: "{{ galaxy_mutable_config_dir }}/welcome.html"
-
-# --------BLOCCO GRAVITY------------
   gravity:
-    #
     process_manager: systemd
-    galaxy_user: galaxy
     galaxy_root: "{{ galaxy_root }}/server"
-    virtualenv: "{{ galaxy_root }}/venv"
-    #app_server: gunicorn
+    galaxy_user: "{{ galaxy_user_name }}"
+    virtualenv: "{{ galaxy_venv_dir }}"
     gunicorn:
       # listening options
-      bind: unix:/srv/galaxy/var/config/gunicorn.sock
-      #bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
+      bind: "unix:{{ galaxy_mutable_config_dir }}/gunicorn.sock"
       # performance options
       workers: 2
       # Other options that will be passed to gunicorn
+      # This permits setting of 'secure' headers like REMOTE_USER (and friends)
+      # https://docs.gunicorn.org/en/stable/settings.html#forwarded-allow-ips
       extra_args: '--forwarded-allow-ips="*"'
+      # This lets Gunicorn start Galaxy completely before forking which is faster.
+      # https://docs.gunicorn.org/en/stable/settings.html#preload-app
       preload: true
     celery:
       concurrency: 2
       loglevel: DEBUG
-    tusd:
-      enable: true
-      tusd_path: /usr/local/sbin/tusd
-      upload_dir: "{{ galaxy_tus_upload_store }}"    
     handlers:
       handler:
-        processes: 3
+        processes: 2
         pools:
-          - job-handler
-          - workflow-scheduler
-galaxy_config_templates:
-  - src: templates/galaxy/config/job_conf.yml.j2
-    dest: "{{ galaxy_config.galaxy.job_config_file }}"
-  - src: templates/galaxy/config/welcome.html
-    dest: "{{ galaxy_config_dir }}"
-#  - src: templates/galaxy/config/reports.yml
-#    dest: "{{ galaxy_reports_path }}"
+          - job-handlers
+          - workflow-schedulers
 
-# systemd
-galaxy_manage_systemd: true
+galaxy_extra_dirs:
+  - /data
 
 # Certbot
-#certbot_auto_renew_hour: "{{ 23 |random(seed=inventory_hostname)  }}"
-#certbot_auto_renew_minute: "{{ 59 |random(seed=inventory_hostname)  }}"
-#certbot_auth_method: --webroot
-#certbot_install_method: virtualenv
-#certbot_auto_renew: yes
-#certbot_auto_renew_user: root
-#certbot_environment: staging
-#certbot_well_known_root: /srv/nginx/_well-known_root
-#
-#certbot_share_key_users:
-#  - nginx
-#certbot_post_renewal: |
-#    systemctl restart nginx || true
-#certbot_domains:
-#  - "{{ inventory_hostname }}"
-#certbot_agree_tos: --agree-tos
-
+certbot_auto_renew_hour: "{{ 23 |random(seed=inventory_hostname)  }}"
+certbot_auto_renew_minute: "{{ 59 |random(seed=inventory_hostname)  }}"
+certbot_auth_method: --webroot
+certbot_install_method: virtualenv
+certbot_auto_renew: yes
+certbot_auto_renew_user: root
+certbot_environment: staging
+certbot_well_known_root: /srv/nginx/_well-known_root
+certbot_share_key_users:
+  - www-data
+certbot_post_renewal: |
+    systemctl restart nginx || true
+certbot_domains:
+ - "{{ inventory_hostname }}"
+certbot_agree_tos: --agree-tos
 
 # NGINX
 nginx_selinux_allow_local_connections: true
 nginx_servers:
-#  - redirect-ssl
-#nginx_ssl_servers:
-   - galaxy
+  - redirect-ssl
+nginx_ssl_servers:
+  - galaxy
 nginx_enable_default_server: false
 nginx_conf_http:
   client_max_body_size: 1g
-#  gzip: "on" # This is enabled by default in Ubuntu, and the duplicate directive will cause a crash.
+  # gzip: "on" # This is enabled by default in Ubuntu, and the duplicate directive will cause a crash.
   gzip_proxied: "any"
   gzip_static: "on"   # The ngx_http_gzip_static_module module allows sending precompressed files with the ".gz" filename extension instead of regular files.
   gzip_vary: "on"
@@ -197,23 +144,11 @@ nginx_conf_http:
       image/png
       image/svg+xml
       image/x-icon
-#nginx_ssl_role: usegalaxy_eu.certbot
-#nginx_conf_ssl_certificate: "/etc/letsencrypt/live/{{ inventory_hostname }}/fullchain.pem"
-#nginx_conf_ssl_certificate_key: "/etc/letsencrypt/live/{{ inventory_hostname }}/privkey.pem"
-#nginx_conf_ssl_certificate: /etc/ssl/certs/fullchain.pem
-# CRITICAL FIX: Usa il nome file generato dall'utente 'nginx'
-#nginx_conf_ssl_certificate_key: /etc/ssl/user/privkey-nginx.pem
+nginx_ssl_role: usegalaxy_eu.certbot
+nginx_conf_ssl_certificate: /etc/ssl/certs/fullchain.pem
+nginx_conf_ssl_certificate_key: /etc/ssl/user/privkey-www-data.pem
+
 
 # TUS
 galaxy_tusd_port: 1080
 galaxy_tus_upload_store: /data/tus
-tusd_instances:
-  - name: main
-    user: "{{ galaxy_user.name }}"
-    group: "galaxy"
-    args:
-      - "-host=localhost"
-      - "-port={{ galaxy_tusd_port }}"
-      - "-upload-dir={{ galaxy_config.galaxy.tus_upload_store }}"
-      - "-hooks-http=https://{{ inventory_hostname }}/api/upload/hooks"
-      - "-hooks-http-forward-headers=X-Api-Key,Cookie"
