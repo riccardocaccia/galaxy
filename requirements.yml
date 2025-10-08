@@ -14,7 +14,7 @@
 - src: geerlingguy.pip 
   version: 2.0.0
 # gxadmin (used in cleanup, and later monitoring.)
-#- src: galaxyproject.gxadmin
-#  version: 0.0.12
-#- src: galaxyproject.tusd  
-#  version: 0.0.1
+- src: galaxyproject.gxadmin
+  version: 0.0.12
+- src: galaxyproject.tusd  
+  version: 0.0.1

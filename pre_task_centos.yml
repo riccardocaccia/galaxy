@@ -14,10 +14,6 @@
     src: https://www.python.org/ftp/python/3.11.9/Python-3.11.9.tgz
     dest: /tmp
     remote_src: yes
-  # La condizione 'when' (python3.stat.exists) dovrebbe essere legata al percorso
-  # finale del binario di Python 3.11, che probabilmente è /usr/local/bin/python3.11.
-  # Se la variabile 'python3.stat.exists' è stata configurata correttamente
-  # per Python 3.7, assicurati di aggiornare il suo path di check.
   when: not python3.stat.exists
 
 - name: Configure, compile and install Python 3.11

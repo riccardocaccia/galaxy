@@ -25,21 +25,20 @@
       become: true
       become_user: postgres
     - geerlingguy.pip
+    - galaxyproject.tusd
     - galaxyproject.galaxy
     - role: galaxyproject.miniconda
       become: true
       become_user: "{{ galaxy_user_name }}"
 #    - usegalaxy_eu.certbot
     - galaxyproject.nginx
-    - galaxyproject.tusd
-#    - galaxyproject.gxadmin
+    - galaxyproject.gxadmin
 
-#  post_tasks:
- #   - name: Setup gxadmin cleanup task
-  #    ansible.builtin.cron:
-   #     name: "Cleanup Old User Data"
-    #    user: galaxy # Run as the Galaxy user
-     #   minute: "0"
-      #  hour: "0"
-       # job: "SHELL=/bin/bash source {{ galaxy_venv_dir }}/bin/activate &&  GALAXY_LOG_DIR=/tmp/gxadmin/ GALAXY_ROOT={{ galaxy_root }}/server GALAXY_CONFIG_FILE={{ galaxy_config_file }} /usr/local/bin/gxadmin galaxy cleanup 60"
-# job: ". {{ galaxy_venv_dir }}/bin/activate && GALAXY_LOG_DIR=/tmp/gxadmin/ GALAXY_ROOT={{ galaxy_root }}/server GALAXY_CONFIG_FILE={{ galaxy_config_file }} /usr/local/bin/gxadmin galaxy cleanup 60"  
+  post_tasks:
+    - name: Setup gxadmin cleanup task
+      ansible.builtin.cron:
+        name: "Cleanup Old User Data"
+        user: galaxy # Run as the Galaxy user
+        minute: "0"
+        hour: "0"
+        job: "SHELL=/bin/bash source {{ galaxy_venv_dir }}/bin/activate &&  GALAXY_LOG_DIR=/tmp/gxadmin/ GALAXY_ROOT={{ galaxy_root }}/server GALAXY_CONFIG_FILE={{ galaxy_config_file }} /usr/local/bin/gxadmin galaxy cleanup 60"
