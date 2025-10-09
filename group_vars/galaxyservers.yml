@@ -13,28 +13,10 @@ miniconda_version: latest
 miniconda_channels: ['conda-forge', 'defaults']
 miniconda_manage_dependencies: false # # Uso esplicito per prevenire conflitti con il ruolo galaxyproject.galaxy
 
-# Galaxy Job Configuration
-galaxy_job_config:
-  runners:
-    local_runner:
-      load: galaxy.jobs.runners.local:LocalJobRunner
-      workers: 4
-  handling:
-    assign: ['db-skip-locked']
-  execution:
-    default: local_env
-    environments:
-      local_env:
-        runner: local_runner
-        tmp_dir: true
-  tools:
-    - class: local # these special tools that aren't parameterized for remote execution - expression tools, upload, etc
-      environment: local_env
-
 galaxy_config:
   galaxy:
     brand: "Mars 🚀"
-    logo_src: "https://training.galaxyproject.org/training-material/topics/admin/tutorials/customization/images/logo.png"
+    #logo_src: "https://training.galaxyproject.org/training-material/topics/admin/tutorials/customization/images/logo.png"
     # Support
     support_url: "https://example.org/support"
     terms_url: "https://example.org/terms-of-service"
@@ -46,7 +28,8 @@ galaxy_config:
     job_working_directory: /data/jobs
     object_store_store_by: uuid
     id_secret: "{{ vault_id_secret }}"
-    job_config: "{{ galaxy_job_config }}" # Use the variable we defined above
+    # Job config
+    job_config_file: "{{ galaxy_config_dir }}/job_conf.yml"
     # SQL Performance
     slow_query_log_threshold: 5
     enable_per_request_sql_debugging: true

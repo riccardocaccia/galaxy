@@ -1,0 +1,7 @@
+- name: Deploy Galaxy job config
+  template:
+    src: templates/galaxy/config/job_conf.yml.j2
+    dest: "{{ galaxy_config_dir }}/job_conf.yml"
+    owner: "{{ galaxy_user_name }}"
+    group: "{{ galaxy_user_name }}"
+    mode: '0644'

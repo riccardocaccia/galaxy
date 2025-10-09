@@ -6,6 +6,7 @@
     - name: Include tasks for RockyLinux9
       import_tasks: pre_task_RockyLinux.yml
       when: ansible_distribution == "Rocky"
+
     - name: Install Dependencies
       package:
         name: 'acl'
@@ -21,14 +22,22 @@
   vars_files:
     - group_vars/secret.yml
   pre_tasks:
+
     - name: Install RHEL/CentOS/Rocky specific dependencies
       package:
         name: ['tmpwatch']
       when: ansible_os_family == 'RedHat'
+
     - name: Install Debian/Ubuntu specific dependencies
       package:
         name: ['tmpreaper']
       when: ansible_os_family == 'Debian'
+
+    - name: Put SELinux in permissive mode.
+      selinux:
+        policy: targeted
+        state: permissive
+
   roles:
     - galaxyproject.tusd
     - galaxyproject.galaxy
@@ -38,6 +47,9 @@
     - galaxyproject.nginx
     - galaxyproject.gxadmin
     - galaxyproject.cvmfs
+
+  tasks:
+   - import_tasks: tasks/deploy_job_config.yml
 
   post_tasks:
     - name: Setup gxadmin cleanup task

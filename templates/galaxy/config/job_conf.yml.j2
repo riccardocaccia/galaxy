@@ -1,0 +1,18 @@
+runners:
+  local_runner:
+    load: galaxy.jobs.runners.local:LocalJobRunner
+    workers: 4
+
+handling:
+  assign: ['db-skip-locked']
+
+execution:
+  default: local_env
+  environments:
+    local_env:
+      runner: local_runner
+      tmp_dir: true
+
+tools:
+  - class: local
+    environment: local_env
