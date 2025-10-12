@@ -1,7 +1,4 @@
 roles/
 .vault-password.txt
 nohup.out
-<<<<<<< HEAD
-=======
 *.json
->>>>>>> 8d77246 (tools management)
