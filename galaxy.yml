@@ -38,6 +38,11 @@
         policy: targeted
         state: permissive
 
+    - name: Update ca-certificates
+      yum:
+        name: ca-certificates
+        state: latest
+           
   roles:
     - galaxyproject.tusd
     - usegalaxy_eu.apptainer
