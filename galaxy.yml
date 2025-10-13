@@ -42,6 +42,10 @@
       yum:
         name: ca-certificates
         state: latest
+
+    - git:
+        repo: 'https://github.com/usegalaxy-eu/libraries-training-repo'
+        dest: /libraries/
            
   roles:
     - galaxyproject.tusd
