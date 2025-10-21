@@ -6,12 +6,16 @@ galaxy_manage_cleanup: true
 galaxy_layout: root-dir
 galaxy_root: /srv/galaxy
 galaxy_user: {name: "{{ galaxy_user_name }}", shell: /bin/bash}
-galaxy_commit_id: release_23.2
+galaxy_commit_id: release_24.2
 galaxy_force_checkout: true
 miniconda_prefix: "{{ galaxy_tool_dependency_dir }}/_conda"
 miniconda_version: latest
 miniconda_channels: ['conda-forge', 'defaults']
 miniconda_manage_dependencies: false # # Uso esplicito per prevenire conflitti con il ruolo galaxyproject.galaxy
+
+tpv_config_dir: /srv/galaxy/var/total_perspective_vortex_src
+tpv_config_dir_name: total_perspective_vortex_src
+tpv_mutable_dir: /srv/galaxy/var/total_perspective_vortex
 
 galaxy_config:
   galaxy:
@@ -30,6 +34,7 @@ galaxy_config:
     id_secret: "{{ vault_id_secret }}"
     # Job config
     job_config_file: "{{ galaxy_config_dir }}/job_conf.yml"
+    job_resource_params_file: "{{ galaxy_config_dir }}/job_resource_params_conf.xml"
     # SQL Performance
     slow_query_log_threshold: 5
     enable_per_request_sql_debugging: true
@@ -63,6 +68,11 @@ galaxy_config:
     # Data Library Directories
     library_import_dir: /libraries/admin
     user_library_import_dir: /libraries/user
+    # Celery
+    amqp_internal_connection: "pyamqp://galaxy:{{ vault_rabbitmq_password_galaxy }}@localhost:5671/galaxy_internal?ssl=1"
+    celery_conf:
+      result_backend: "redis://localhost:6379/0"
+    enable_celery_tasks: true
   gravity:
     process_manager: systemd
     galaxy_root: "{{ galaxy_root }}/server"
@@ -82,6 +92,11 @@ galaxy_config:
       preload: true
     celery:
       concurrency: 2
+      enable_beat: true
+      enable: true
+      queues: celery,galaxy.internal,galaxy.external
+      pool: threads
+      memory_limit: 2
       loglevel: DEBUG
     tusd:
       enable: true
@@ -93,19 +108,45 @@ galaxy_config:
         pools:
           - job-handlers
           - workflow-schedulers
+    reports:
+      enable: true
+      url_prefix: /reports
+      bind: "unix:{{ galaxy_mutable_config_dir }}/reports.sock"
+      config_file: "{{ galaxy_config_dir }}/reports.yml"
 
-#galaxy_config_files_public:
-#  - src: files/galaxy/welcome.html
-#    dest: "{{ galaxy_mutable_config_dir }}/welcome.html"
+#galaxy_job_config_file: "{{ galaxy_config_dir }}/galaxy.yml"
+galaxy_job_config_file: "{{ galaxy_config_dir }}/job_conf.yml"
+
+galaxy_config_files_public:
+  - src: files/galaxy/welcome.html
+    dest: "{{ galaxy_mutable_config_dir }}/welcome.html"
+  - src: files/galaxy/config/tpv_rules_local.yml
+    dest: "{{ tpv_config_dir }}/tpv_rules_local.yml"
+#  - src: files/galaxy/config/tpv_rules_local.yml
+#    dest: /srv/galaxy/var/total_perspective_vortex/tpv_rules_local.yml
 
 galaxy_config_templates:
+  - src: templates/galaxy/config/job_conf.yml.j2
+    dest: "{{ galaxy_config_dir }}/job_conf.yml" 
   - src: templates/galaxy/config/container_resolvers_conf.yml.j2
     dest: "{{ galaxy_config.galaxy.container_resolvers_config_file }}"
   - src: templates/galaxy/config/dependency_resolvers_conf.xml
     dest: "{{ galaxy_config.galaxy.dependency_resolvers_config_file }}"
+  - src: templates/galaxy/config/job_resource_params_conf.xml.j2
+    dest: "{{ galaxy_config.galaxy.job_resource_params_file }}"
+  - src: templates/galaxy/config/reports.yml
+    dest: "{{ galaxy_config.gravity.reports.config_file }}"
 
 galaxy_extra_dirs:
   - /data
+  - "{{ galaxy_config_dir }}/{{ tpv_config_dir_name }}"
+
+galaxy_extra_privsep_dirs:
+  - "{{ tpv_mutable_dir }}"
+tpv_privsep: true
+
+galaxy_local_tools:
+- testing.xml
 
 # Certbot
 certbot_auto_renew_hour: "{{ 23 |random(seed=inventory_hostname)  }}"
@@ -114,13 +155,16 @@ certbot_auth_method: --webroot
 certbot_install_method: virtualenv
 certbot_auto_renew: yes
 certbot_auto_renew_user: root
-certbot_environment: staging
-#certbot_environment: production
+#certbot_environment: staging
+certbot_environment: production
 certbot_well_known_root: /srv/nginx/_well-known_root
 certbot_share_key_users:
   - www-data
+certbot_share_key_ids:
+  - "999:999"
 certbot_post_renewal: |
     systemctl restart nginx || true
+    docker restart rabbit_hole || true
 certbot_domains:
  - "{{ inventory_hostname }}"
 certbot_agree_tos: --agree-tos
@@ -160,6 +204,79 @@ nginx_ssl_role: usegalaxy_eu.certbot
 nginx_conf_ssl_certificate: /etc/ssl/certs/fullchain.pem
 nginx_conf_ssl_certificate_key: /etc/ssl/user/privkey-www-data.pem
 
+#Install pip docker package for ansible
+pip_install_packages:
+  - name: docker
+# RabbitMQ
+rabbitmq_container:
+  name: rabbit_hole
+  image: rabbitmq:3.11-management
+  hostname: "{{ inventory_hostname }}"
+
+rabbitmq_plugins:
+  - rabbitmq_management
+
+rabbitmq_config:
+  listeners:
+    tcp: none
+  ssl_listeners:
+    default: 5671
+  ssl_options:
+    verify: verify_peer
+    cacertfile: /etc/ssl/certs/fullchain.pem
+    certfile: /etc/ssl/certs/cert.pem
+    keyfile: /etc/ssl/user/privkey-999:999.pem
+    fail_if_no_peer_cert: 'false'
+  management_agent:
+    disable_metrics_collector: "false"
+  management:
+    disable_stats: 'false'
+  consumer_timeout: 21600000 # 6 hours in milliseconds
+
+rabbitmq_vhosts:
+  - /pulsar/pulsar_au
+  - galaxy_internal
+
+rabbitmq_users:
+  - user: admin
+    password: "{{ vault_rabbitmq_admin_password }}"
+    tags: administrator
+    vhost: /
+  - user: pulsar_au
+    password: "{{ vault_rabbitmq_password_vhost }}"
+    vhost: /pulsar/pulsar_au
+  - user: galaxy
+    password: "{{ vault_rabbitmq_password_galaxy }}"
+    vhost: galaxy_internal
+  - user: flower
+    password: "{{ vault_rabbitmq_password_flower }}"
+    tags: administrator
+    vhost: galaxy_internal
+
 # TUS
 galaxy_tusd_port: 1080
 galaxy_tus_upload_store: /data/tus
+
+#Redis
+galaxy_additional_venv_packages:
+  - redis
+
+# Flower
+flower_python_version: python3
+flower_app_dir: "{{ galaxy_root }}"
+flower_python_path: "{{ galaxy_root }}/server/lib"
+flower_venv_dir: "{{ galaxy_venv_dir }}"
+flower_app_name: galaxy.celery
+flower_db_file: "{{ galaxy_root }}/var/flower.db"
+flower_persistent: true
+flower_broker_api: "https://flower:{{ vault_rabbitmq_password_flower }}@localhost:5671/api/"
+flower_broker_url: "amqp://flower:{{ vault_rabbitmq_password_flower }}@localhost:5672/galaxy_internal?ssl=false"
+#flower_broker_url: "amqp://flower:{{ vault_rabbitmq_password_flower }}@localhost:5671/galaxy_internal?ssl=true"
+flower_proxy_prefix: /flower
+
+flower_ui_users:
+  - name: admin
+    password: "{{ vault_flower_user_password}}"
+
+flower_environment_variables:
+  GALAXY_CONFIG_FILE: "{{ galaxy_config_file }}"

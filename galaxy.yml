@@ -34,9 +34,12 @@
       when: ansible_os_family == 'Debian'
 
     - name: Put SELinux in permissive mode.
-      selinux:
-        policy: targeted
-        state: permissive
+      command: setenforce 0
+      become: yes
+      ignore_errors: yes
+#      selinux:
+#        policy: targeted
+#        state: permissive
 
     - name: Update ca-certificates
       yum:
@@ -51,10 +54,15 @@
     - galaxyproject.tusd
     - usegalaxy_eu.apptainer
     - galaxyproject.galaxy
+    - usegalaxy_eu.tpv_auto_lint
     - role: galaxyproject.miniconda
       become: true
       become_user: "{{ galaxy_user_name }}"
+    - geerlingguy.redis
+    - usegalaxy_eu.flower
     - galaxyproject.nginx
+    - geerlingguy.docker
+    - usegalaxy_eu.rabbitmqserver
     - galaxyproject.gxadmin
     - galaxyproject.cvmfs
 

@@ -22,3 +22,20 @@
 # Singularity/Apptainer
 - src: usegalaxy_eu.apptainer
   version: 0.0.3
+# TPV Linting
+- name: usegalaxy_eu.tpv_auto_lint
+  version: 0.4.3
+# RabbitMQ for Pulsar
+- src: geerlingguy.docker
+  version: 6.1.0
+- src: usegalaxy_eu.rabbitmqserver
+  version: 1.4.4
+- src: galaxyproject.pulsar
+  version: 1.0.10
+# Celery, Redis, and Flower (dashboard)
+- name: geerlingguy.redis
+  version: 1.8.0
+- name: usegalaxy_eu.flower
+  version: 1.0.2
+- src: usegalaxy_eu.influxdb
+  version: v6.0.7
