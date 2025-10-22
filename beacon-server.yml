@@ -1,0 +1,22 @@
+---
+- name: Beacon Server
+  hosts: beacon_server
+  become: true
+  become_user: root
+  
+  vars:
+    pip_install_virtualenv: /opt/beacon-pip
+    pip_install_virtualenv_command: /usr/bin/python3 -m venv
+    pip_executable: /opt/beacon-pip/bin/pip
+
+  vars_files:
+    - group_vars/secret.yml
+
+  pre_tasks:
+    - name: Ensure beacon virtualenv exists
+      command: /usr/bin/python3 -m venv /opt/beacon-pip
+      args:
+        creates: /opt/beacon-pip/bin/activate
+
+  roles:
+    - paprikant.beacon

@@ -65,6 +65,7 @@
     - usegalaxy_eu.rabbitmqserver
     - galaxyproject.gxadmin
     - galaxyproject.cvmfs
+    - dj-wasabi.telegraf
 
   tasks:
    - import_tasks: tasks/deploy_job_config.yml

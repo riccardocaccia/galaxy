@@ -9,3 +9,12 @@ galaxyservers
 
 [monitoring]
 dev.usegalaxy.it ansible_connection=local ansible_user=riccardo-caccia
+
+[beacon]
+[beacon:children]
+beacon_import
+beacon_server
+[beacon_server]
+dev.usegalaxy.it ansible_connection=local ansible_user=riccardo-caccia
+[beacon_import]
+dev.usegalaxy.it ansible_connection=local ansible_user=riccardo-caccia

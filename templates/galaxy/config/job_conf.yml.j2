@@ -3,9 +3,12 @@ runners:
     load: galaxy.jobs.runners.local:LocalJobRunner
     workers: 4
 
+  slurm:
+    load: galaxy.jobs.runners.slurm:SlurmJobRunner
+
   pulsar_runner:
     load: galaxy.jobs.runners.pulsar:PulsarMQJobRunner
-    amqp_url: "pyamqp://pulsar_au:wIGgev5iSjoyDW8kaBqFd0ZM@212.189.205.216:5672//pulsar/pulsar_au?ssl=0"
+    amqp_url: "pyamqp://pulsar_au:wIGgev5iSjoyDW8kaBqFd0ZM@212.189.205.216:5671/pulsar/pulsar_au?ssl=1"
     #amqp_url: "pyamqp://pulsar_au:{{ vault_rabbitmq_password_vhost }}@localhost:5671/{{ rabbitmq_vhosts[0] }}?ssl=1"
     amqp_acknowledge: true
     amqp_ack_republish_time: 1200
@@ -24,7 +27,18 @@ execution:
     local_env:
       runner: local_runner
       tmp_dir: true
-
+#
+#    slurm:
+#      runner: slurm
+#      singularity_enabled: true
+#      env:
+#      - name: LC_ALL
+#        value: C
+#      - name: APPTAINER_CACHEDIR
+#        value: /tmp/singularity
+#      - name: APPTAINER_TMPDIR 
+#        value: /tmp
+#
     tpv_dispatcher:
       runner: dynamic
       type: python
